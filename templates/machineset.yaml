@@ -1,0 +1,53 @@
+{{- if .Values.machineset.enabled }}
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  name: {{ printf "%s-%s" .Values.clusterID .Values.machineset.name | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Values.namespaceMachineAPI }}
+  labels:
+    machine.openshift.io/cluster-api-cluster: {{ .Values.clusterID }}
+spec:
+  replicas: {{ .Values.machineset.replicas }}
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-machineset: {{ printf "%s-%s" .Values.clusterID .Values.machineset.name | trunc 63 | trimSuffix "-" }}
+  template:
+    metadata:
+      labels:
+        machine.openshift.io/cluster-api-cluster: {{ .Values.clusterID }}
+        machine.openshift.io/cluster-api-machineset: {{ printf "%s-%s" .Values.clusterID .Values.machineset.name | trunc 63 | trimSuffix "-" }}
+        machine.openshift.io/cluster-api-machine-role: worker
+        machine.openshift.io/cluster-api-machine-type: worker
+    spec:
+      metadata:
+        labels:
+{{- range $k, $v := .Values.machineset.nodeLabels }}
+          {{ $k }}: {{ $v | quote }}
+{{- end }}
+      {{- if .Values.machineset.taints }}
+      taints:
+{{ toYaml .Values.machineset.taints | indent 8 }}
+      {{- end }}
+      providerSpec:
+        value:
+          apiVersion: vsphereproviderconfig.openshift.io/v1beta1
+          kind: VSphereMachineProviderSpec
+          template: {{ .Values.machineset.vm.template | quote }}
+          workspace:
+            server: {{ .Values.machineset.vm.vcenter | quote }}
+            datacenter: {{ .Values.machineset.vm.datacenter | quote }}
+            folder: {{ .Values.machineset.vm.folder | quote }}
+            resourcePool: {{ .Values.machineset.vm.resourcePool | quote }}
+            datastore: {{ .Values.machineset.vm.datastore | quote }}
+          network:
+            devices:
+            - networkName: {{ .Values.machineset.vm.network | quote }}
+              dhcp4: true
+          numCPUs: {{ .Values.machineset.vm.numCPUs }}
+          memoryMiB: {{ .Values.machineset.vm.memoryMiB }}
+          diskGiB: {{ .Values.machineset.vm.diskGiB }}
+          userDataSecret:
+            name: {{ .Values.machineset.userDataSecretName }}
+          credentialsSecret:
+            name: {{ .Values.machineset.credentialsSecretName }}
+{{- end }}

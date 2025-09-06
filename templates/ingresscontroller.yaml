@@ -1,0 +1,27 @@
+{{- if .Values.ingressController.enabled }}
+apiVersion: operator.openshift.io/v1
+kind: IngressController
+metadata:
+  name: {{ .Values.ingressController.name }}
+  namespace: {{ .Values.ingressController.namespace }}
+spec:
+  replicas: {{ .Values.ingressController.replicas }}
+  {{- if .Values.ingressController.domain }}
+  domain: {{ .Values.ingressController.domain }}
+  {{- end }}
+  routeSelector:
+    matchLabels:
+{{ toYaml .Values.ingressController.routeSelector.matchLabels | indent 6 }}
+  nodePlacement:
+    nodeSelector:
+      matchLabels:
+{{ toYaml .Values.ingressController.nodeSelector | indent 8 }}
+    tolerations:
+{{ toYaml .Values.ingressController.tolerations | indent 6 }}
+  endpointPublishingStrategy:
+    type: {{ .Values.ingressController.endpointPublishingStrategy.type }}
+    {{- if eq .Values.ingressController.endpointPublishingStrategy.type "LoadBalancerService" }}
+    loadBalancer:
+      scope: {{ .Values.ingressController.endpointPublishingStrategy.scope }}
+    {{- end }}
+{{- end }}

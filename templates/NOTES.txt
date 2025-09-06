@@ -1,0 +1,15 @@
+Thanks for installing the ocp-ingress-caixa-chart!
+
+Next steps:
+1) Ensure your vSphere values in values.yaml are correct and that the secrets
+   'worker-user-data' and 'vsphere-cloud-credentials' exist in the 'openshift-machine-api' namespace.
+2) Install the chart:
+     helm install ingress-caixa ./ocp-ingress-caixa-chart -n openshift-machine-api --create-namespace
+   (IngressController is cluster-managed under 'openshift-ingress-operator' and will be created automatically.)
+3) Label routes you want handled by this shard:
+     oc label route <name> -n <ns> ingress=caixa --overwrite
+4) (Optional) If you set a taint on the dedicated nodes, make sure the IngressController has matching tolerations (already templated).
+5) Verify controllers are scheduled on the targeted nodes:
+     oc -n openshift-ingress get pods -l ingresscontroller.operator.openshift.io/deployment-ingresscontroller=caixa -o wide
+
+If you use 'domain: caixa.gov.br', only Routes whose host ends with that domain are admissible here.
