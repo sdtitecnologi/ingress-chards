@@ -1,0 +1,66 @@
+# General
+clusterID: "<cluster-id>"  # e.g., mycluster-abcde
+namespaceMachineAPI: "openshift-machine-api"
+
+# MachineSet for dedicated ingress nodes (vSphere)
+machineset:
+  enabled: true
+  name: "ingress-caixa"
+  replicas: 2
+
+  # Add both worker and a custom ingress role label to the Nodes
+  nodeLabels:
+    node-role.kubernetes.io/worker: ""
+    node-role.kubernetes.io/ingress-caixa: ""
+
+  # Optional: taint the nodes so only targeted workloads land here
+  taints:
+    - key: "node-role.kubernetes.io/ingress-caixa"
+      value: "true"
+      effect: "NoSchedule"
+
+  vm:
+    vcenter: "<vcenter.example.com>"
+    datacenter: "<Datacenter>"
+    cluster: "<Cluster>"
+    datastore: "<Datastore>"
+    network: "<PortGroup-or-Network>"
+    folder: "<VMFolder>"
+    resourcePool: "<ResourcePool>"
+    template: "<RHCOS-or-Template-Name>"
+    diskGiB: 120
+    memoryMiB: 8192
+    numCPUs: 4
+
+  # UserData Secret and Credentials usually exist already in IPI installs
+  userDataSecretName: "worker-user-data"
+  credentialsSecretName: "vsphere-cloud-credentials"
+
+# IngressController (shard) that will host caixa routes
+ingressController:
+  enabled: true
+  name: "caixa"
+  namespace: "openshift-ingress-operator"
+  replicas: 2
+
+  # Set the domain this shard should serve. Routes must use hosts that end with this domain.
+  # If you intend to select by label only (regardless of domain), you may omit or keep it aligned.
+  domain: "caixa.gov.br"
+
+  routeSelector:
+    matchLabels:
+      ingress: "caixa"
+
+  # Target the dedicated nodes created by the MachineSet
+  nodeSelector:
+    node-role.kubernetes.io/ingress-caixa: ""
+
+  # Tolerate the taint applied on those nodes (if you keep taints enabled)
+  tolerations:
+    - key: "node-role.kubernetes.io/ingress-caixa"
+      value: "true"
+      effect: "NoSchedule"
+
+  endpointPublishingStrategy:
+    type: "LoadBalancerService"   # Options: LoadBalancerService | HostNetwork | NodePortService
+    scope: "External"             # For LoadBalancerService: External or Internal

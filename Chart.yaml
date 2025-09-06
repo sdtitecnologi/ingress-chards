@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ocp-ingress-caixa-chart
+description: Helm chart to create a dedicated vSphere MachineSet and a sharded IngressController with routeSelector for caixa.gov.br on OpenShift.
+type: application
+version: 0.1.0
+appVersion: "4.x"
